@@ -32,6 +32,7 @@ import android.util.DisplayMetrics;
 import android.view.*;
 import android.widget.*;
 
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
 import org.geometerplus.zlibrary.core.image.ZLImage;
 import org.geometerplus.zlibrary.core.image.ZLImageProxy;
 import org.geometerplus.zlibrary.core.network.ZLNetworkException;

@@ -29,6 +29,7 @@ import android.os.*;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
 import org.geometerplus.zlibrary.core.network.*;
 import org.geometerplus.zlibrary.core.resources.ZLResource;
 import org.geometerplus.zlibrary.core.util.MimeType;

@@ -30,6 +30,8 @@ import android.view.*;
 import org.geometerplus.zlibrary.core.options.Config;
 
 import org.geometerplus.zlibrary.ui.android.R;
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
+#Above is auto?
 
 import org.geometerplus.fbreader.fbreader.options.CancelMenuHelper;
 

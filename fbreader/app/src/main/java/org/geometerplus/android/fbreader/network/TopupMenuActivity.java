@@ -31,6 +31,7 @@ import org.geometerplus.fbreader.network.NetworkLibrary;
 import org.geometerplus.fbreader.network.urlInfo.UrlInfo;
 import org.geometerplus.fbreader.network.authentication.NetworkAuthenticationManager;
 
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
 import org.geometerplus.android.util.PackageUtil;
 
 import org.geometerplus.android.fbreader.api.PluginApi;

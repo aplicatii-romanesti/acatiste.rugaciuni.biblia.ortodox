@@ -19,8 +19,12 @@
 
 package org.geometerplus.android.fbreader.network.action;
 
+<<<<<<< 2249224793e65cc375aed37c2c0874dcc6d185b9:fbreader/app/src/main/java/org/geometerplus/android/fbreader/network/action/ReloadCatalogAction.java
 import org.geometerplus.zlibrary.core.network.ZLNetworkContext;
 import org.geometerplus.zlibrary.ui.android.R;
+=======
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
+>>>>>>> App package rename:src/org/geometerplus/android/fbreader/network/action/ReloadCatalogAction.java
 
 import org.geometerplus.fbreader.network.*;
 import org.geometerplus.fbreader.network.tree.NetworkCatalogTree;

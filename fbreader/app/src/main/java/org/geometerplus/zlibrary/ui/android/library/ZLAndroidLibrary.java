@@ -40,6 +40,9 @@ import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.options.*;
 
 import org.geometerplus.android.util.DeviceType;
+import org.geometerplus.zlibrary.ui.android.aplicatii.romanesti.R;
+#import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
+#Removed by 2.0.5 ?? Or we need it for applicatii.romanesti??
 
 public final class ZLAndroidLibrary extends ZLibrary {
 	public final ZLBooleanOption ShowStatusBarOption = new ZLBooleanOption("LookNFeel", "ShowStatusBar", false);
