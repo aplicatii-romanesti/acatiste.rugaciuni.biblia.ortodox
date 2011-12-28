@@ -1068,7 +1068,11 @@
 			<node name="register" value="Înscrieti-vă"/>
 		</node>
 		<node name="CustomCatalogDialog">
+<<<<<<< e13bf5645fbd71d961709817c1337f8514ac1c5a
 			<node name="title" value="Aplicatie: Adaugă catalog personalizat"/>
+=======
+			<node name="title" value="Aplicatie: adauga catalog personalizat"/>
+>>>>>>> 1.3 - neatentie
 			<node name="catalogTitle" value="Titlu"/>
 			<node name="catalogUrl" value="URL-ul"/>
 			<node name="catalogSummary" value="Rezumat"/>
