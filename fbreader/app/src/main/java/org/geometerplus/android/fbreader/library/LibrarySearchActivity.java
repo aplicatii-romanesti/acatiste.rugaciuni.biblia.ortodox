@@ -19,6 +19,8 @@
 
 package org.geometerplus.android.fbreader.library;
 
+import org.geometerplus.fbreader.library.Library;
+
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Intent;
@@ -39,6 +41,13 @@ public class LibrarySearchActivity extends Activity {
 				intent.putExtra(SearchManager.QUERY, pattern);
 				startActivity(intent);
 			}
+		} else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+			String bookFile = intent.getStringExtra("intent_extra_data_key");
+			Intent bookIntent = new Intent(getApplicationContext(),
+					BookInfoActivity.class);
+			bookIntent.putExtra(BookInfoActivity.CURRENT_BOOK_PATH_KEY,
+					bookFile);
+			startActivity(bookIntent);
 		}
 		finish();
 	}

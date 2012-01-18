@@ -18,8 +18,9 @@
  */
 
 package org.geometerplus.fbreader.fbreader;
+
 //maryhit imports for SDCardCopy methods
-import java.io.File; 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,101 +29,103 @@ import java.io.OutputStream;
 //maryhit: end imports for SDCardCopy methods
 import java.util.*;
 
+import org.geometerplus.android.fbreader.library.*;//maryhit for DB & Lib index init
+import org.fbreader.util.ComparisonUtil;
 import org.geometerplus.android.util.UIUtil;
-import org.geometerplus.zlibrary.core.library.ZLibrary;
-import org.geometerplus.zlibrary.core.resources.ZLResource;
-import org.geometerplus.zlibrary.core.filesystem.*;
+#import org.geometerplus.zlibrary.core.library.ZLibrary; #removed by 205
+#import org.geometerplus.zlibrary.core.resources.ZLResource; #removed by 205
+#import org.geometerplus.zlibrary.core.filesystem.*; #removed by 205
 import org.geometerplus.zlibrary.core.application.*;
-import org.geometerplus.zlibrary.core.options.*;
-import org.geometerplus.zlibrary.core.util.ZLColor;
+import org.geometerplus.zlibrary.core.drm.FileEncryptionInfo;
+import org.geometerplus.zlibrary.core.drm.EncryptionMethod;
+import org.geometerplus.zlibrary.core.util.*;
 
 import org.geometerplus.zlibrary.text.hyphenation.ZLTextHyphenator;
-import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
+import org.geometerplus.zlibrary.text.model.ZLTextModel;
+import org.geometerplus.zlibrary.text.view.*;
 
-import org.geometerplus.fbreader.bookmodel.BookModel;
-import org.geometerplus.fbreader.library.*;
-//maryhit: again for SDCardCopy
+import org.geometerplus.fbreader.book.*;
+import org.geometerplus.fbreader.bookmodel.*;
+import org.geometerplus.fbreader.fbreader.options.*;
+import org.geometerplus.fbreader.formats.*;
+import org.geometerplus.fbreader.network.sync.SyncData;
+import org.geometerplus.fbreader.util.*;
+
+//maryhit: again for SDCardCopy:
+import org.geometerplus.fbreader.Paths;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.res.AssetManager;
 import android.util.Log;
 
 public final class FBReaderApp extends ZLApplication {
-	public final ZLBooleanOption AllowScreenBrightnessAdjustmentOption =
-		new ZLBooleanOption("LookNFeel", "AllowScreenBrightnessAdjustment", true);
-	public final ZLStringOption TextSearchPatternOption =
-		new ZLStringOption("TextSearch", "Pattern", "");
-
-	public final ZLBooleanOption UseSeparateBindingsOption =
-		new ZLBooleanOption("KeysOptions", "UseSeparateBindings", false);
-
-	public final ZLBooleanOption EnableDoubleTapOption =
-		new ZLBooleanOption("Options", "EnableDoubleTap", false);
-	public final ZLBooleanOption NavigateAllWordsOption =
-		new ZLBooleanOption("Options", "NavigateAllWords", false);
-
-	public static enum WordTappingAction {
-		doNothing, selectSingleWord, startSelecting, openDictionary
+	public interface ExternalFileOpener {
+		public void openFile(ExternalFormatPlugin plugin, Book book, Bookmark bookmark);
 	}
-	public final ZLEnumOption<WordTappingAction> WordTappingActionOption =
-		new ZLEnumOption<WordTappingAction>("Options", "WordTappingAction", WordTappingAction.startSelecting);
 
-	public final ZLColorOption ImageViewBackgroundOption =
-		new ZLColorOption("Colors", "ImageViewBackground", new ZLColor(127, 127, 127));
-	public static enum ImageTappingAction {
-		doNothing, selectImage, openImageView
+	public static interface Notifier {
+		void showMissingBookNotification(SyncData.ServerBookInfo info);
 	}
-	public final ZLEnumOption<ImageTappingAction> ImageTappingActionOption =
-		new ZLEnumOption<ImageTappingAction>("Options", "ImageTappingAction", ImageTappingAction.openImageView);
 
-	private final int myDpi = ZLibrary.Instance().getDisplayDPI();
-	public final ZLIntegerRangeOption LeftMarginOption =
-		new ZLIntegerRangeOption("Options", "LeftMargin", 0, 30, myDpi / 20);
-	public final ZLIntegerRangeOption RightMarginOption =
-		new ZLIntegerRangeOption("Options", "RightMargin", 0, 30, myDpi / 20);
-	public final ZLIntegerRangeOption TopMarginOption =
-		new ZLIntegerRangeOption("Options", "TopMargin", 0, 30, 0);
-	public final ZLIntegerRangeOption BottomMarginOption =
-		new ZLIntegerRangeOption("Options", "BottomMargin", 0, 30, 4);
+	private ExternalFileOpener myExternalFileOpener;
 
-	public final ZLIntegerRangeOption ScrollbarTypeOption =
-		new ZLIntegerRangeOption("Options", "ScrollbarType", 0, 3, FBView.SCROLLBAR_SHOW_AS_FOOTER);
-	public final ZLIntegerRangeOption FooterHeightOption =
-		new ZLIntegerRangeOption("Options", "FooterHeight", 8, 20, 9);
-	public final ZLBooleanOption FooterShowTOCMarksOption =
-		new ZLBooleanOption("Options", "FooterShowTOCMarks", true);
-	public final ZLBooleanOption FooterShowClockOption =
-		new ZLBooleanOption("Options", "ShowClockInFooter", true);
-	public final ZLBooleanOption FooterShowBatteryOption =
-		new ZLBooleanOption("Options", "ShowBatteryInFooter", true);
-	public final ZLBooleanOption FooterShowProgressOption =
-		new ZLBooleanOption("Options", "ShowProgressInFooter", true);
-	public final ZLStringOption FooterFontOption =
-		new ZLStringOption("Options", "FooterFont", "Droid Sans");
+	public void setExternalFileOpener(ExternalFileOpener o) {
+		myExternalFileOpener = o;
+	}
 
-	final ZLStringOption ColorProfileOption =
-		new ZLStringOption("Options", "ColorProfile", ColorProfile.DAY);//maryhit: here you can chage default to night
+	public final MiscOptions MiscOptions = new MiscOptions();
+	public final ImageOptions ImageOptions = new ImageOptions();
+	public final ViewOptions ViewOptions = new ViewOptions();
+	public final PageTurningOptions PageTurningOptions = new PageTurningOptions();
+	public final SyncOptions SyncOptions = new SyncOptions();
 
-	public final ZLBooleanOption ShowPreviousBookInCancelMenuOption =
-		new ZLBooleanOption("CancelMenu", "previousBook", false);
-	public final ZLBooleanOption ShowPositionsInCancelMenuOption =
-		new ZLBooleanOption("CancelMenu", "positions", true);
-
-	private final ZLKeyBindings myBindings = new ZLKeyBindings("Keys");
+	private final ZLKeyBindings myBindings = new ZLKeyBindings();
 
 	public final FBView BookTextView;
 	public final FBView FootnoteView;
+	private String myFootnoteModelId;
 
-	public BookModel Model;
+	public volatile BookModel Model;
+	public volatile Book ExternalBook;
 
-	private final String myArg0;
+	private ZLTextPosition myJumpEndPosition;
+	private Date myJumpTimeStamp;
 
-	public FBReaderApp(String arg) {
-		myArg0 = arg;
+	public final IBookCollection<Book> Collection;
+
+	private final SyncData mySyncData = new SyncData();
+
+	public FBReaderApp(SystemInfo systemInfo, final IBookCollection<Book> collection) {
+		super(systemInfo);
+
+		Collection = collection;
+
+		collection.addListener(new IBookCollection.Listener<Book>() {
+			public void onBookEvent(BookEvent event, Book book) {
+				switch (event) {
+					case BookmarkStyleChanged:
+					case BookmarksUpdated:
+						if (Model != null && (book == null || collection.sameBook(book, Model.Book))) {
+							if (BookTextView.getModel() != null) {
+								setBookmarkHighlightings(BookTextView, null);
+							}
+							if (FootnoteView.getModel() != null && myFootnoteModelId != null) {
+								setBookmarkHighlightings(FootnoteView, myFootnoteModelId);
+							}
+						}
+						break;
+					case Updated:
+						onBookUpdated(book);
+						break;
+				}
+			}
+
+			public void onBuildEvent(IBookCollection.Status status) {
+			}
+		});
 
 		addAction(ActionCode.INCREASE_FONT, new ChangeFontSizeAction(this, +2));
 		addAction(ActionCode.DECREASE_FONT, new ChangeFontSizeAction(this, -2));
-		addAction(ActionCode.ROTATE, new RotateAction(this));
 
 		addAction(ActionCode.FIND_NEXT, new FindNextAction(this));
 		addAction(ActionCode.FIND_PREVIOUS, new FindPreviousAction(this));
@@ -141,9 +144,6 @@ public final class FBReaderApp extends ZLApplication {
 		addAction(ActionCode.VOLUME_KEY_SCROLL_FORWARD, new VolumeKeyTurnPageAction(this, true));
 		addAction(ActionCode.VOLUME_KEY_SCROLL_BACK, new VolumeKeyTurnPageAction(this, false));
 
-		addAction(ActionCode.SWITCH_TO_DAY_PROFILE, new SwitchProfileAction(this, ColorProfile.DAY));
-		addAction(ActionCode.SWITCH_TO_NIGHT_PROFILE, new SwitchProfileAction(this, ColorProfile.NIGHT));
-
 		addAction(ActionCode.EXIT, new ExitAction(this));
 
 		BookTextView = new FBView(this);
@@ -152,24 +152,16 @@ public final class FBReaderApp extends ZLApplication {
 		setView(BookTextView);
 	}
 
-	public void initWindow() {
-		super.initWindow();
-		wait("loadingBook", new Runnable() {
-			public void run() {
-				Book book = createBookForFile(ZLFile.createFileByPath(myArg0));
-				if (book == null) {
-					book = Library.getRecentBook();
-				}
-				if ((book == null) || !book.File.exists()) {
-					book = Book.getByFile(Library.getHelpFile());
-				}
-				openBookInternal(book, null);
-			}
-		});
+	public Book getCurrentBook() {
+		final BookModel m = Model;
+		return m != null ? m.Book : ExternalBook;
 	}
 
-	
-	/* MARYHIT COPY FILES TO SDCARD - START */ //maryhit
+	public void openHelpBook() {
+		openBook(Collection.getBookByFile(BookUtil.getHelpFile().getPath()), null, null, null);
+	}
+
+	/* MARYHIT COPY FILES TO SDCARD - START */// maryhit
 	public boolean TestIfCopyIsRequired(Context ctx) {
 		String fileBooksVersion = "/mnt/sdcard/Books/versiune.txt";
 		try {
@@ -217,20 +209,15 @@ public final class FBReaderApp extends ZLApplication {
 
 		return text.toString();
 	}
-/*
-	public void copyBooksToSDCard(Context ctx) {
-		try {
-			if (!TestIfCopyIsRequired(ctx)) {
-				return;
-			}
-			Log.i("copyBooksToSDCard", "Copy Starts Now");
-			copyFileOrDir("", ctx); // no trailing slash / please !!!;
-			Log.i("copyBooksToSDCard", "Copy Ends Now");
-		} catch (Exception ex) {
-			Log.e("copyBooksToSDCard", ex.getMessage());
-		}
-	}*/
-	public void copyBooksToSDCard(final  Context ctx) {
+
+	/*
+	 * public void copyBooksToSDCard(Context ctx) { try { if
+	 * (!TestIfCopyIsRequired(ctx)) { return; } Log.i("copyBooksToSDCard",
+	 * "Copy Starts Now"); copyFileOrDir("", ctx); // no trailing slash / please
+	 * !!!; Log.i("copyBooksToSDCard", "Copy Ends Now"); } catch (Exception ex)
+	 * { Log.e("copyBooksToSDCard", ex.getMessage()); } }
+	 */
+	public void copyBooksToSDCard(final Context ctx) {
 
 		UIUtil.wait("creatingBooksDatabase", new Runnable() {
 			public void run() {
@@ -241,6 +228,8 @@ public final class FBReaderApp extends ZLApplication {
 					Log.i("copyBooksToSDCard", "Copy Starts Now");
 					copyFileOrDir("", ctx); // no trailing slash / please !!!;
 					Log.i("copyBooksToSDCard", "Copy Ends Now");
+					initDbAndLibraryIndex(ctx);
+					Log.i("initDbAndLibraryIndex", "Index Called");
 				} catch (Exception ex) {
 					Log.e("copyBooksToSDCard", ex.getMessage());
 				}
@@ -305,40 +294,76 @@ public final class FBReaderApp extends ZLApplication {
 
 	}
 
-	 /* MARYHIT COPY FILES TO SDCARD - END */
-	
-	public void openBook(final Book book, final Bookmark bookmark) {
-		if (book == null) {
-			return;
+	void initDbAndLibraryIndex(Context ctx) {
+
+		BooksDatabase myDatabase = SQLiteBooksDatabase.Instance();
+		if (myDatabase == null) {
+			myDatabase = new SQLiteBooksDatabase(ctx, "LIBRARY");
 		}
+		Library myLibrary = Library.Instance();
+		myLibrary.startBuild();
+
+	}
+
+	/* MARYHIT COPY FILES TO SDCARD - END */
+	public Book getCurrentServerBook(Notifier notifier) {
+		final SyncData.ServerBookInfo info = mySyncData.getServerBookInfo();
+		if (info == null) {
+			return null;
+		}
+
+		for (String hash : info.Hashes) {
+			final Book book = Collection.getBookByHash(hash);
+			if (book != null) {
+				return book;
+			}
+		}
+		if (notifier != null) {
+			notifier.showMissingBookNotification(info);
+		}
+		return null;
+	}
+	public void openBook(Book book, final Bookmark bookmark, Runnable postAction, Notifier notifier) {
 		if (Model != null) {
-			if (bookmark == null & book.File.getPath().equals(Model.Book.File.getPath())) {
+			if (book == null || bookmark == null && Collection.sameBook(book, Model.Book)) {
 				return;
 			}
 		}
-		wait("loadingBook", new Runnable() {
-			public void run() {
-				openBookInternal(book, bookmark);
+
+		if (book == null) {
+			book = getCurrentServerBook(notifier);
+			if (book == null) {
+				book = Collection.getRecentBook(0);
 			}
-		});
-	}
-
-	private ColorProfile myColorProfile;
-
-	public ColorProfile getColorProfile() {
-		if (myColorProfile == null) {
-			myColorProfile = ColorProfile.get(getColorProfileName());
+			if (book == null || !BookUtil.fileByBook(book).exists()) {
+				book = Collection.getBookByFile(BookUtil.getHelpFile().getPath());
+			}
+			if (book == null) {
+				return;
+			}
 		}
-		return myColorProfile;
+		final Book bookToOpen = book;
+		bookToOpen.addNewLabel(Book.READ_LABEL);
+		Collection.saveBook(bookToOpen);
+
+		final SynchronousExecutor executor = createExecutor("loadingBook");
+		executor.execute(new Runnable() {
+			public void run() {
+				openBookInternal(bookToOpen, bookmark, false);
+			}
+		}, postAction);
 	}
 
-	public String getColorProfileName() {
-		return ColorProfileOption.getValue();
-	}
-
-	public void setColorProfileName(String name) {
-		ColorProfileOption.setValue(name);
-		myColorProfile = null;
+	private void reloadBook() {
+		final Book book = getCurrentBook();
+		if (book != null) {
+			final SynchronousExecutor executor = createExecutor("loadingBook");
+			executor.execute(new Runnable() {
+				public void run() {
+					openBookInternal(book, null, true);
+				}
+			}, null);
+		}
 	}
 
 	public ZLKeyBindings keyBindings() {
@@ -346,22 +371,56 @@ public final class FBReaderApp extends ZLApplication {
 	}
 
 	public FBView getTextView() {
-		return (FBView)getCurrentView();
+		return (FBView) getCurrentView();
 	}
 
+	public AutoTextSnippet getFootnoteData(String id) {
+		if (Model == null) {
+			return null;
+		}
+		final BookModel.Label label = Model.getLabel(id);
+		if (label == null) {
+			return null;
+		}
+		final ZLTextModel model;
+		if (label.ModelId != null) {
+			model = Model.getFootnoteModel(label.ModelId);
+		} else {
+			model = Model.getTextModel();
+		}
+		if (model == null) {
+			return null;
+		}
+		final ZLTextWordCursor cursor =
+			new ZLTextWordCursor(new ZLTextParagraphCursor(model, label.ParagraphIndex));
+		final AutoTextSnippet longSnippet = new AutoTextSnippet(cursor, 140);
+		if (longSnippet.IsEndOfText) {
+			return longSnippet;
+		} else {
+			return new AutoTextSnippet(cursor, 100);
+		}
+	}
 	public void tryOpenFootnote(String id) {
 		if (Model != null) {
-			BookModel.Label label = Model.getLabel(id);
+			myJumpEndPosition = null;
+			myJumpTimeStamp = null;
+			final BookModel.Label label = Model.getLabel(id);
 			if (label != null) {
-				addInvisibleBookmark();
 				if (label.ModelId == null) {
+					if (getTextView() == BookTextView) {
+						addInvisibleBookmark();
+						myJumpEndPosition = new ZLTextFixedPosition(label.ParagraphIndex, 0, 0);
+						myJumpTimeStamp = new Date();
+					}
 					BookTextView.gotoPosition(label.ParagraphIndex, 0, 0);
+					setView(BookTextView);
 				} else {
-					FootnoteView.setModel(Model.getFootnoteModel(label.ModelId));
+					setFootnoteModel(label.ModelId);
 					setView(FootnoteView);
 					FootnoteView.gotoPosition(label.ParagraphIndex, 0, 0);
 				}
 				getViewWidget().repaint();
+				storePosition();
 			}
 		}
 	}
@@ -371,211 +430,397 @@ public final class FBReaderApp extends ZLApplication {
 		FootnoteView.clearCaches();
 	}
 
-	void openBookInternal(Book book, Bookmark bookmark) {
-		if (book != null) {
-			onViewChanged();
-
-			if (Model != null) {
-				Model.Book.storePosition(BookTextView.getStartCursor());
-			}
-			BookTextView.setModel(null);
-			FootnoteView.setModel(null);
-			clearTextCaches();
-
-			Model = null;
-			System.gc();
-			System.gc();
-			Model = BookModel.createModel(book);
-			if (Model != null) {
-				ZLTextHyphenator.Instance().load(book.getLanguage());
-				BookTextView.setModel(Model.BookTextModel);
-				BookTextView.gotoPosition(book.getStoredPosition());
-				if (bookmark == null) {
-					setView(BookTextView);
-				} else {
-					gotoBookmark(bookmark);
-				}
-				Library.addBookToRecentList(book);
-				final StringBuilder title = new StringBuilder(book.getTitle());
-				if (!book.authors().isEmpty()) {
-					boolean first = true;
-					for (Author a : book.authors()) {
-						title.append(first ? " (" : ", ");
-						title.append(a.DisplayName);
-						first = false;
-					}
-					title.append(")");
-				}
-				setTitle(title.toString());
-			}
+	public Bookmark addSelectionBookmark() {
+		final FBView fbView = getTextView();
+		final TextSnippet snippet = fbView.getSelectedSnippet();
+		if (snippet == null) {
+			return null;
 		}
-		getViewWidget().repaint();
+
+		final Bookmark bookmark = new Bookmark(
+			Collection,
+			Model.Book,
+			fbView.getModel().getId(),
+			snippet,
+			true
+		);
+		Collection.saveBookmark(bookmark);
+		fbView.clearSelection();
+
+		return bookmark;
 	}
 
-	public void gotoBookmark(Bookmark bookmark) {
-		addInvisibleBookmark();
+	private void setBookmarkHighlightings(ZLTextView view, String modelId) {
+		view.removeHighlightings(BookmarkHighlighting.class);
+		for (BookmarkQuery query = new BookmarkQuery(Model.Book, 20); ; query = query.next()) {
+			final List<Bookmark> bookmarks = Collection.bookmarks(query);
+			if (bookmarks.isEmpty()) {
+				break;
+			}
+			for (Bookmark b : bookmarks) {
+				if (b.getEnd() == null) {
+					BookmarkUtil.findEnd(b, view);
+				}
+				if (ComparisonUtil.equal(modelId, b.ModelId)) {
+					view.addHighlighting(new BookmarkHighlighting(view, Collection, b));
+				}
+			}
+		}
+	}
+
+	private void setFootnoteModel(String modelId) {
+		final ZLTextModel model = Model.getFootnoteModel(modelId);
+		FootnoteView.setModel(model);
+		if (model != null) {
+			myFootnoteModelId = modelId;
+			setBookmarkHighlightings(FootnoteView, modelId);
+		}
+	}
+
+	private synchronized void openBookInternal(final Book book, Bookmark bookmark, boolean force) {
+		if (!force && Model != null && Collection.sameBook(book, Model.Book)) {
+			if (bookmark != null) {
+				gotoBookmark(bookmark, false);
+			}
+			return;
+		}
+
+		hideActivePopup();
+		storePosition();
+
+		BookTextView.setModel(null);
+		FootnoteView.setModel(null);
+		clearTextCaches();
+		Model = null;
+		ExternalBook = null;
+		System.gc();
+		System.gc();
+
+		final PluginCollection pluginCollection = PluginCollection.Instance(SystemInfo);
+		final FormatPlugin plugin;
+		try {
+			plugin = BookUtil.getPlugin(pluginCollection, book);
+		} catch (BookReadingException e) {
+			processException(e);
+			return;
+		}
+
+		if (plugin instanceof ExternalFormatPlugin) {
+			ExternalBook = book;
+			final Bookmark bm;
+			if (bookmark != null) {
+				bm = bookmark;
+			} else {
+				ZLTextPosition pos = getStoredPosition(book);
+				if (pos == null) {
+					pos = new ZLTextFixedPosition(0, 0, 0);
+				}
+				bm = new Bookmark(Collection, book, "", new EmptyTextSnippet(pos), false);
+			}
+			myExternalFileOpener.openFile((ExternalFormatPlugin)plugin, book, bm);
+			return;
+		}
+
+		try {
+			Model = BookModel.createModel(book, plugin);
+			Collection.saveBook(book);
+			ZLTextHyphenator.Instance().load(book.getLanguage());
+			BookTextView.setModel(Model.getTextModel());
+			setBookmarkHighlightings(BookTextView, null);
+			gotoStoredPosition();
+			if (bookmark == null) {
+				setView(BookTextView);
+			} else {
+				gotoBookmark(bookmark, false);
+			}
+			Collection.addToRecentlyOpened(book);
+			final StringBuilder title = new StringBuilder(book.getTitle());
+			if (!book.authors().isEmpty()) {
+				boolean first = true;
+				for (Author a : book.authors()) {
+					title.append(first ? " (" : ", ");
+					title.append(a.DisplayName);
+					first = false;
+				}
+				title.append(")");
+			}
+			setTitle(title.toString());
+		} catch (BookReadingException e) {
+			processException(e);
+		}
+
+		getViewWidget().reset();
+		getViewWidget().repaint();
+
+		for (FileEncryptionInfo info : plugin.readEncryptionInfos(book)) {
+			if (info != null && !EncryptionMethod.isSupported(info.Method)) {
+				showErrorMessage("unsupportedEncryptionMethod", book.getPath());
+				break;
+			}
+		}
+	}
+
+	private List<Bookmark> invisibleBookmarks() {
+		final List<Bookmark> bookmarks = Collection.bookmarks(
+			new BookmarkQuery(Model.Book, false, 10)
+		);
+		Collections.sort(bookmarks, new Bookmark.ByTimeComparator());
+		return bookmarks;
+	}
+
+	public boolean jumpBack() {
+		try {
+			if (getTextView() != BookTextView) {
+				showBookTextView();
+				return true;
+			}
+
+			if (myJumpEndPosition == null || myJumpTimeStamp == null) {
+				return false;
+			}
+			// more than 2 minutes ago
+			if (myJumpTimeStamp.getTime() + 2 * 60 * 1000 < new Date().getTime()) {
+				return false;
+			}
+			if (!myJumpEndPosition.equals(BookTextView.getStartCursor())) {
+				return false;
+			}
+
+			final List<Bookmark> bookmarks = invisibleBookmarks();
+			if (bookmarks.isEmpty()) {
+				return false;
+			}
+			final Bookmark b = bookmarks.get(0);
+			Collection.deleteBookmark(b);
+			gotoBookmark(b, true);
+			return true;
+		} finally {
+			myJumpEndPosition = null;
+			myJumpTimeStamp = null;
+		}
+	}
+
+	private void gotoBookmark(Bookmark bookmark, boolean exactly) {
 		final String modelId = bookmark.ModelId;
 		if (modelId == null) {
-			BookTextView.gotoPosition(bookmark);
+			addInvisibleBookmark();
+			if (exactly) {
+				BookTextView.gotoPosition(bookmark);
+			} else {
+				BookTextView.gotoHighlighting(
+					new BookmarkHighlighting(BookTextView, Collection, bookmark)
+				);
+			}
 			setView(BookTextView);
 		} else {
-			FootnoteView.setModel(Model.getFootnoteModel(modelId));
-			FootnoteView.gotoPosition(bookmark);
+			setFootnoteModel(modelId);
+			if (exactly) {
+				FootnoteView.gotoPosition(bookmark);
+			} else {
+				FootnoteView.gotoHighlighting(
+					new BookmarkHighlighting(FootnoteView, Collection, bookmark)
+				);
+			}
 			setView(FootnoteView);
 		}
 		getViewWidget().repaint();
+		storePosition();
 	}
 
 	public void showBookTextView() {
 		setView(BookTextView);
 	}
 
-	private Book createBookForFile(ZLFile file) {
-		if (file == null) {
-			return null;
-		}
-		Book book = Book.getByFile(file);
-		if (book != null) {
-			book.insertIntoBookList();
-			return book;
-		}
-		if (file.isArchive()) {
-			for (ZLFile child : file.children()) {
-				book = Book.getByFile(child);
-				if (book != null) {
-					book.insertIntoBookList();
-					return book;
-				}
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void openFile(ZLFile file) {
-		final Book book = createBookForFile(file);
-		if (book != null) {
-			openBook(book, null);
-		}
-	}
-
 	public void onWindowClosing() {
-		if (Model != null && BookTextView != null) {
-			Model.Book.storePosition(BookTextView.getStartCursor());
+		storePosition();
+	}
+
+	private class PositionSaver implements Runnable {
+		private final Book myBook;
+		private final ZLTextPosition myPosition;
+		private final RationalNumber myProgress;
+
+		PositionSaver(Book book, ZLTextPosition position, RationalNumber progress) {
+			myBook = book;
+			myPosition = position;
+			myProgress = progress;
+		}
+
+		public void run() {
+			Collection.storePosition(myBook.getId(), myPosition);
+			myBook.setProgress(myProgress);
+			Collection.saveBook(myBook);
 		}
 	}
 
-	static enum CancelActionType {
-		previousBook,
-		returnTo,
-		close
-	}
+	private class SaverThread extends Thread {
+		private final List<Runnable> myTasks =
+			Collections.synchronizedList(new LinkedList<Runnable>());
 
-	public static class CancelActionDescription {
-		final CancelActionType Type;
-		public final String Title;
-		public final String Summary;
-
-		CancelActionDescription(CancelActionType type, String summary) {
-			final ZLResource resource = ZLResource.resource("cancelMenu");
-			Type = type;
-			Title = resource.getResource(type.toString()).getValue();
-			Summary = summary;
+		SaverThread() {
+			setPriority(MIN_PRIORITY);
 		}
-	}
 
-	private static class BookmarkDescription extends CancelActionDescription {
-		final Bookmark Bookmark;
-		
-		BookmarkDescription(Bookmark b) {
-			super(CancelActionType.returnTo, b.getText());
-			Bookmark = b;
+		void add(Runnable task) {
+			myTasks.add(task);
 		}
-	}
 
-	private final ArrayList<CancelActionDescription> myCancelActionsList =
-		new ArrayList<CancelActionDescription>();
-
-	public List<CancelActionDescription> getCancelActionsList() {
-		myCancelActionsList.clear();
-		if (ShowPreviousBookInCancelMenuOption.getValue()) {
-			final Book previousBook = Library.getPreviousBook();
-			if (previousBook != null) {
-				myCancelActionsList.add(new CancelActionDescription(
-					CancelActionType.previousBook, previousBook.getTitle()
-				));
-			}
-		}
-		if (ShowPositionsInCancelMenuOption.getValue()) {
-			if (Model != null && Model.Book != null) {
-				for (Bookmark bookmark : Bookmark.invisibleBookmarks(Model.Book)) {
-					myCancelActionsList.add(new BookmarkDescription(bookmark));
+		public void run() {
+			while (true) {
+				synchronized (myTasks) {
+					while (!myTasks.isEmpty()) {
+						myTasks.remove(0).run();
+					}
+				}
+				try {
+					sleep(500);
+				} catch (InterruptedException e) {
 				}
 			}
 		}
-		myCancelActionsList.add(new CancelActionDescription(
-			CancelActionType.close, null
-		));
-		return myCancelActionsList;
 	}
 
-	public void runCancelAction(int index) {
-		if (index < 0 || index >= myCancelActionsList.size()) {
+	public void useSyncInfo(boolean openOtherBook, Notifier notifier) {
+		if (openOtherBook && SyncOptions.ChangeCurrentBook.getValue()) {
+			final Book fromServer = getCurrentServerBook(notifier);
+			if (fromServer != null && !Collection.sameBook(fromServer, Collection.getRecentBook(0))) {
+				openBook(fromServer, null, null, notifier);
+				return;
+			}
+		}
+
+		if (myStoredPositionBook != null &&
+			mySyncData.hasPosition(Collection.getHash(myStoredPositionBook, true))) {
+			gotoStoredPosition();
+			storePosition();
+		}
+	}
+
+	private final SaverThread mySaverThread = new SaverThread();
+	private volatile ZLTextPosition myStoredPosition;
+	private volatile Book myStoredPositionBook;
+
+	private ZLTextFixedPosition getStoredPosition(Book book) {
+		final ZLTextFixedPosition.WithTimestamp fromServer =
+			mySyncData.getAndCleanPosition(Collection.getHash(book, true));
+		final ZLTextFixedPosition.WithTimestamp local =
+			Collection.getStoredPosition(book.getId());
+
+		if (local == null) {
+			return fromServer != null ? fromServer : new ZLTextFixedPosition(0, 0, 0);
+		} else if (fromServer == null) {
+			return local;
+		} else {
+			return fromServer.Timestamp >= local.Timestamp ? fromServer : local;
+		}
+	}
+
+	private void gotoStoredPosition() {
+		myStoredPositionBook = Model != null ? Model.Book : null;
+		if (myStoredPositionBook == null) {
 			return;
 		}
+		myStoredPosition = getStoredPosition(myStoredPositionBook);
+		BookTextView.gotoPosition(myStoredPosition);
+		savePosition();
+	}
 
-		final CancelActionDescription description = myCancelActionsList.get(index);
-		switch (description.Type) {
+	public void storePosition() {
+		final Book bk = Model != null ? Model.Book : null;
+		if (bk != null && bk == myStoredPositionBook && myStoredPosition != null && BookTextView != null) {
+			final ZLTextPosition position = new ZLTextFixedPosition(BookTextView.getStartCursor());
+			if (!myStoredPosition.equals(position)) {
+				myStoredPosition = position;
+				savePosition();
+			}
+		}
+	}
+
+	private void savePosition() {
+		final RationalNumber progress = BookTextView.getProgress();
+		synchronized (mySaverThread) {
+			if (!mySaverThread.isAlive()) {
+				mySaverThread.start();
+			}
+			mySaverThread.add(new PositionSaver(myStoredPositionBook, myStoredPosition, progress));
+		}
+	}
+
+	public boolean hasCancelActions() {
+		return new CancelMenuHelper().getActionsList(Collection).size() > 1;
+	}
+
+	public void runCancelAction(CancelMenuHelper.ActionType type, Bookmark bookmark) {
+		switch (type) {
+			case library:
+				runAction(ActionCode.SHOW_LIBRARY);
+				break;
+			case networkLibrary:
+				runAction(ActionCode.SHOW_NETWORK_LIBRARY);
+				break;
 			case previousBook:
-				openBook(Library.getPreviousBook(), null);
+				openBook(Collection.getRecentBook(1), null, null, null);
 				break;
 			case returnTo:
-			{
-				final Bookmark b = ((BookmarkDescription)description).Bookmark;
-				b.delete();
-				gotoBookmark(b);
+				Collection.deleteBookmark(bookmark);
+				gotoBookmark(bookmark, true);
 				break;
-			}
 			case close:
 				closeWindow();
 				break;
 		}
 	}
 
-	private void updateInvisibleBookmarksList(Bookmark b) {
-		if (Model.Book != null && b != null) {
-			for (Bookmark bm : Bookmark.invisibleBookmarks(Model.Book)) {
+	private synchronized void updateInvisibleBookmarksList(Bookmark b) {
+		if (Model != null && Model.Book != null && b != null) {
+			for (Bookmark bm : invisibleBookmarks()) {
 				if (b.equals(bm)) {
-					bm.delete();
+					Collection.deleteBookmark(bm);
 				}
 			}
-			b.save();
-			final List<Bookmark> bookmarks = Bookmark.invisibleBookmarks(Model.Book);
+			Collection.saveBookmark(b);
+			final List<Bookmark> bookmarks = invisibleBookmarks();
 			for (int i = 3; i < bookmarks.size(); ++i) {
-				bookmarks.get(i).delete();
+				Collection.deleteBookmark(bookmarks.get(i));
 			}
 		}
 	}
 
 	public void addInvisibleBookmark(ZLTextWordCursor cursor) {
-		if (cursor != null && Model != null && Model.Book != null && getTextView() == BookTextView) {
-			updateInvisibleBookmarksList(new Bookmark(
-				Model.Book,
-				getTextView().getModel().getId(),
-				cursor,
-				6,
-				false
-			));
+		if (cursor == null) {
+			return;
 		}
+
+		cursor = new ZLTextWordCursor(cursor);
+		if (cursor.isNull()) {
+			return;
+		}
+
+		final ZLTextView textView = getTextView();
+		final ZLTextModel textModel;
+		final Book book;
+		final AutoTextSnippet snippet;
+		synchronized (textView) {
+			textModel = textView.getModel();
+			final BookModel model = Model;
+			book = model != null ? model.Book : null;
+			if (book == null || textView != BookTextView || textModel == null) {
+				return;
+			}
+			snippet = new AutoTextSnippet(cursor, 30);
+		}
+		updateInvisibleBookmarksList(new Bookmark(
+			Collection, book, textModel.getId(), snippet, false
+		));
 	}
 
 	public void addInvisibleBookmark() {
 		if (Model.Book != null && getTextView() == BookTextView) {
-			updateInvisibleBookmarksList(addBookmark(6, false));
+			updateInvisibleBookmarksList(createBookmark(30, false));
 		}
 	}
 
-	public Bookmark addBookmark(int maxLength, boolean visible) {
+	public Bookmark createBookmark(int maxChars, boolean visible) {
 		final FBView view = getTextView();
 		final ZLTextWordCursor cursor = view.getStartCursor();
 
@@ -584,11 +829,54 @@ public final class FBReaderApp extends ZLApplication {
 		}
 
 		return new Bookmark(
+			Collection,
 			Model.Book,
 			view.getModel().getId(),
-			cursor,
-			maxLength,
+			new AutoTextSnippet(cursor, maxChars),
 			visible
 		);
+	}
+
+	public TOCTree getCurrentTOCElement() {
+		final ZLTextWordCursor cursor = BookTextView.getStartCursor();
+		if (Model == null || cursor == null) {
+			return null;
+		}
+
+		int index = cursor.getParagraphIndex();
+		if (cursor.isEndOfParagraph()) {
+			++index;
+		}
+		TOCTree treeToSelect = null;
+		for (TOCTree tree : Model.TOCTree) {
+			final TOCTree.Reference reference = tree.getReference();
+			if (reference == null) {
+				continue;
+			}
+			if (reference.ParagraphIndex > index) {
+				break;
+			}
+			treeToSelect = tree;
+		}
+		return treeToSelect;
+	}
+
+	public void onBookUpdated(Book book) {
+		if (Model == null || Model.Book == null || !Collection.sameBook(Model.Book, book)) {
+			return;
+		}
+
+		final String newEncoding = book.getEncodingNoDetection();
+		final String oldEncoding = Model.Book.getEncodingNoDetection();
+
+		Model.Book.updateFrom(book);
+
+		if (newEncoding != null && !newEncoding.equals(oldEncoding)) {
+			reloadBook();
+		} else {
+			ZLTextHyphenator.Instance().load(Model.Book.getLanguage());
+			clearTextCaches();
+			getViewWidget().repaint();
+		}
 	}
 }
