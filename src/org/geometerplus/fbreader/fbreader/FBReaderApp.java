@@ -35,6 +35,14 @@ import org.geometerplus.android.util.UIUtil;
 #import org.geometerplus.zlibrary.core.library.ZLibrary; #removed by 205
 #import org.geometerplus.zlibrary.core.resources.ZLResource; #removed by 205
 #import org.geometerplus.zlibrary.core.filesystem.*; #removed by 205
+=======
+import java.util.*;
+
+import org.geometerplus.android.fbreader.library.*;//maryhit for DB & Lib index init
+import org.geometerplus.android.util.UIUtil;
+import org.geometerplus.zlibrary.core.library.ZLibrary;
+import org.geometerplus.zlibrary.core.resources.ZLResource;
+import org.geometerplus.zlibrary.core.filesystem.*;
 import org.geometerplus.zlibrary.core.application.*;
 import org.geometerplus.zlibrary.core.drm.FileEncryptionInfo;
 import org.geometerplus.zlibrary.core.drm.EncryptionMethod;
