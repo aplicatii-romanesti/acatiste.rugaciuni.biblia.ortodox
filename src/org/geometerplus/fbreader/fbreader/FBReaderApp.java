@@ -266,7 +266,7 @@ public final class FBReaderApp extends ZLApplication {
 				copyFile(dataSDCardRelativePath, ctx);
 			} else {
 				//String fullPath = "/mnt/sdcard/" + dataSDCardRelativePath;
-				String fullPath = Paths.BooksDirectoryOption().getValue()+"/../" + dataSDCardRelativePath;
+				String fullPath = Paths.cardDirectory() + dataSDCardRelativePath;//+ "/"
 				File dir = new File(fullPath);
 				if (!dir.exists())
 					if (!dir.mkdir())
@@ -292,7 +292,7 @@ public final class FBReaderApp extends ZLApplication {
 		try {
 			in = assetManager.open(apkSrcAssetsdataSDCardPathRoot + filename);
 			//String newFileName = "/mnt/sdcard" + filename;
-			String newFileName = Paths.BooksDirectoryOption().getValue() + filename;
+			String newFileName = Paths.cardDirectory() + filename;
 			out = new FileOutputStream(newFileName);
 
 			byte[] buffer = new byte[1024];
