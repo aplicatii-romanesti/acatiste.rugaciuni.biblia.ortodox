@@ -441,6 +441,10 @@ public final class Library {
 	}
 
 	private volatile boolean myBuildStarted = false;
+	
+	public synchronized void doSyncBuild(){
+		build();
+	}
 
 	public synchronized void startBuild() {
 		if (myBuildStarted) {
