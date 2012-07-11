@@ -442,7 +442,7 @@ public final class Library {
 
 	private volatile boolean myBuildStarted = false;
 	
-	public synchronized void doSyncBuild(){ //by maryhit to replace startBuild
+	public synchronized void doSyncBuild(){ //by maryhit to replace startBuildg
 		if (myBuildStarted) {
 			fireModelChangedEvent(ChangeListener.Code.StatusChanged);
 			return;
