@@ -72,6 +72,7 @@ import android.content.res.AssetManager;
 import android.util.Log;
 
 public final class FBReaderApp extends ZLApplication {
+<<<<<<< e89c43e78c3c7fcde72be144b83e64c3b6aa9485
 	public interface ExternalFileOpener {
 		public void openFile(ExternalFormatPlugin plugin, Book book, Bookmark bookmark);
 	}
@@ -93,6 +94,69 @@ public final class FBReaderApp extends ZLApplication {
 	public final SyncOptions SyncOptions = new SyncOptions();
 
 	private final ZLKeyBindings myBindings = new ZLKeyBindings();
+=======
+	public final ZLBooleanOption AllowScreenBrightnessAdjustmentOption =
+		new ZLBooleanOption("LookNFeel", "AllowScreenBrightnessAdjustment", true);
+	public final ZLStringOption TextSearchPatternOption =
+		new ZLStringOption("TextSearch", "Pattern", "");
+
+	public final ZLBooleanOption UseSeparateBindingsOption =
+		new ZLBooleanOption("KeysOptions", "UseSeparateBindings", false);
+
+	public final ZLBooleanOption EnableDoubleTapOption =
+		new ZLBooleanOption("Options", "EnableDoubleTap", false);
+	public final ZLBooleanOption NavigateAllWordsOption =
+		new ZLBooleanOption("Options", "NavigateAllWords", false);
+
+	public static enum WordTappingAction {
+		doNothing, selectSingleWord, startSelecting, openDictionary
+	}
+	public final ZLEnumOption<WordTappingAction> WordTappingActionOption =
+		new ZLEnumOption<WordTappingAction>("Options", "WordTappingAction", WordTappingAction.startSelecting);
+
+	public final ZLColorOption ImageViewBackgroundOption =
+		new ZLColorOption("Colors", "ImageViewBackground", new ZLColor(255, 255, 255));
+	public static enum ImageTappingAction {
+		doNothing, selectImage, openImageView
+	}
+	public final ZLEnumOption<ImageTappingAction> ImageTappingActionOption =
+		new ZLEnumOption<ImageTappingAction>("Options", "ImageTappingAction", ImageTappingAction.openImageView);
+
+	private final int myDpi = ZLibrary.Instance().getDisplayDPI();
+	public final ZLIntegerRangeOption LeftMarginOption =
+		new ZLIntegerRangeOption("Options", "LeftMargin", 0, 30, myDpi / 20);
+	public final ZLIntegerRangeOption RightMarginOption =
+		new ZLIntegerRangeOption("Options", "RightMargin", 0, 30, myDpi / 20);
+	public final ZLIntegerRangeOption TopMarginOption =
+		new ZLIntegerRangeOption("Options", "TopMargin", 0, 30, 0);
+	public final ZLIntegerRangeOption BottomMarginOption =
+		new ZLIntegerRangeOption("Options", "BottomMargin", 0, 30, 4);
+
+	public final ZLIntegerRangeOption ScrollbarTypeOption =
+		new ZLIntegerRangeOption("Options", "ScrollbarType", 0, 3, FBView.SCROLLBAR_SHOW_AS_FOOTER);
+	public final ZLIntegerRangeOption FooterHeightOption =
+		new ZLIntegerRangeOption("Options", "FooterHeight", 8, 20, 9);
+	public final ZLBooleanOption FooterShowTOCMarksOption =
+		new ZLBooleanOption("Options", "FooterShowTOCMarks", true);
+	public final ZLBooleanOption FooterShowClockOption =
+		new ZLBooleanOption("Options", "ShowClockInFooter", true);
+	public final ZLBooleanOption FooterShowBatteryOption =
+		new ZLBooleanOption("Options", "ShowBatteryInFooter", true);
+	public final ZLBooleanOption FooterShowProgressOption =
+		new ZLBooleanOption("Options", "ShowProgressInFooter", true);
+	public final ZLStringOption FooterFontOption =
+		new ZLStringOption("Options", "FooterFont", "Droid Sans");
+
+	final ZLStringOption ColorProfileOption =
+		new ZLStringOption("Options", "ColorProfile", ColorProfile.NIGHT);//maryhit: default for day/night is here; I changed the default from DAY to NIGHT
+
+	public final ZLBooleanOption ShowPreviousBookInCancelMenuOption =
+		new ZLBooleanOption("CancelMenu", "previousBook", false);
+	public final ZLBooleanOption ShowPositionsInCancelMenuOption =
+		new ZLBooleanOption("CancelMenu", "positions", true);
+
+	private final ZLKeyBindings myBindings = new ZLKeyBindings("Keys");
+>>>>>>> ver inc; disable tips url;remove useless menus
 
 	public final FBView BookTextView;
 	public final FBView FootnoteView;

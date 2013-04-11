@@ -81,13 +81,16 @@ public final class Library {
 		fireModelChangedEvent(ChangeListener.Code.StatusChanged);
 	}
 
-	private Library() {
+	public Library(BooksDatabase db) {
+		myDatabase = db;
+
+		new FileFirstLevelTree(myRootTree, ROOT_FILE_TREE);//maryhit moved on top
 		new FavoritesTree(myRootTree, ROOT_FAVORITES);
 		new FirstLevelTree(myRootTree, ROOT_RECENT);
-		new FirstLevelTree(myRootTree, ROOT_BY_AUTHOR);
-		new FirstLevelTree(myRootTree, ROOT_BY_TITLE);
-		new FirstLevelTree(myRootTree, ROOT_BY_TAG);
-		new FileFirstLevelTree(myRootTree, ROOT_FILE_TREE);
+		//new FirstLevelTree(myRootTree, ROOT_BY_AUTHOR);//maryhit disabled
+		//new FirstLevelTree(myRootTree, ROOT_BY_TITLE);//maryhit disabled
+		//new FirstLevelTree(myRootTree, ROOT_BY_TAG);//maryhit disabled
+		//new FileFirstLevelTree(myRootTree, ROOT_FILE_TREE);//maryhit moved on top
 	}
 
 	public LibraryTree getRootTree() {
@@ -416,7 +419,7 @@ public final class Library {
 			);
 			file.setCached(false);
 		}
-		
+
 		// Step 4: add help file
 		final ZLFile helpFile = getHelpFile();
 		Book helpBook = savedBooksByFileId.get(fileInfos.getId(helpFile));
@@ -441,14 +444,14 @@ public final class Library {
 	}
 
 	private volatile boolean myBuildStarted = false;
-	
+
 	public synchronized void doSyncBuild(){ //by maryhit to replace startBuildg
 		if (myBuildStarted) {
 			fireModelChangedEvent(ChangeListener.Code.StatusChanged);
 			return;
 		}
 		myBuildStarted = true;
-		
+
 		setStatus(myStatusMask | STATUS_LOADING);
 		try{
 			build();
@@ -520,7 +523,7 @@ public final class Library {
 			fireModelChangedEvent(ChangeListener.Code.Found);
 			return;
 		}
-		
+
 		FirstLevelTree newSearchResults = null;
 		final List<Book> booksCopy;
 		synchronized (myBooks) {
