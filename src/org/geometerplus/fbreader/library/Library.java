@@ -87,9 +87,9 @@ public final class Library {
 		new FileFirstLevelTree(myRootTree, ROOT_FILE_TREE);//maryhit moved on top
 		new FavoritesTree(myRootTree, ROOT_FAVORITES);
 		new FirstLevelTree(myRootTree, ROOT_RECENT);
-		//new FirstLevelTree(myRootTree, ROOT_BY_AUTHOR);//maryhit disabled
-		//new FirstLevelTree(myRootTree, ROOT_BY_TITLE);//maryhit disabled
-		//new FirstLevelTree(myRootTree, ROOT_BY_TAG);//maryhit disabled
+		new FirstLevelTree(myRootTree, ROOT_BY_AUTHOR);//maryhit disabled
+		new FirstLevelTree(myRootTree, ROOT_BY_TITLE);//maryhit disabled
+		new FirstLevelTree(myRootTree, ROOT_BY_TAG);//maryhit disabled
 		//new FileFirstLevelTree(myRootTree, ROOT_FILE_TREE);//maryhit moved on top
 	}
 
