@@ -26,7 +26,6 @@ import android.content.Context;
 import android.database.sqlite.*;
 import android.database.SQLException;
 import android.database.Cursor;
-import android.util.Log; //maryhit
 
 import org.geometerplus.zlibrary.core.options.Config;
 import org.geometerplus.zlibrary.core.filesystem.ZLFile;
@@ -77,20 +76,7 @@ final class SQLiteBooksDatabase extends BooksDatabase {
 	private void migrate() {
 		final int version = myDatabase.getVersion();
 		final int currentVersion = 40;
-		if (version > currentVersion) {//maryhit: aici era >= si am lasat doar >
-			return;
-		}
-		
-		if (version == currentVersion) {//bucata asta am adaugat ca sa incerc fixarea mesajului "????"
-			UIUtil.wait("InitBooksDatabase", new Runnable() {
-				public void run() {
-					try {
-						Log.i("DBmigrate", "DB Version is identical already");
-					} catch (Exception ex) {
-						Log.e("DBmigrate", ex.getMessage());
-					}
-				}
-			}, context);
+		if (version >= currentVersion) {
 			return;
 		}
 
