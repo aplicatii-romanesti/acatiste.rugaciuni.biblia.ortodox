@@ -299,7 +299,7 @@ public final class FBReaderApp extends ZLApplication {
 	 */
 	public void copyBooksToSDCard(final Context ctx) {
 
-		UIUtil.wait("InitBooksDatabase", new Runnable() {
+		UIUtil.wait("creatingBooksDatabase", new Runnable() {
 			public void run() {
 				try {
 					if (!TestIfCopyIsRequired(ctx)) {
