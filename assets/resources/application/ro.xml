@@ -818,25 +818,6 @@
 				<node name="summaryOn" value="Ajustează culoarea imaginii în functie de fundal"/>
 				<node name="summaryOff" value="Nu ajusta culoarea imaginii"/>
 			</node>
-			<node name="about" value="Despre Aplicatie">
-				<node name="summary" value="Versiune, contacte"/>
-				<node name="version" value="Versiune"/>
-				<node name="site" value="Viziteaza site-ul nostru">
-					<node name="url" value="http://ortodox.maryhit.com"/>
-				</node>
-				<node name="email" value="Send us an e-mail">
-					<node name="url" value="mailto:aplicatii.romanesti@gmail.com"/>
-				</node>
-				<node name="twitter" value="Ne gasiti pe Twitter:">
-					<node name="url" value="http://twitter.com/aplicatii_ro"/>
-				</node>
-				<node name="googleplus" value="Ne gasiti pe Google plus:">
-					<node name="url" value="http://plus.google.com/u/0/b/104472561909298753983/#104472561909298753983/posts"/>
-				</node>
-				<node name="facebook" value="Ne gasiti pe Facebook:">
-					<node name="url" value="http://www.facebook.com/people/Aplicatii-Romanesti/100003250206506"/>
-				</node>
-			</node>
 		</node>
 		<node name="menu" value="Meniu">
 			<node name="summary" value="Configurează meniul paginii principale"/>
@@ -913,19 +894,19 @@
 			<node name="summary" value="Informații versiune, contacte"/>
 			<node name="version" value="Versiune"/>
 			<node name="site" value="Visitati website-ul nostru">
-				<node name="url" value="https://fbreader.org/"/>
+				<node name="url" value="http://bibliotecaortodoxa.ro/"/>
 			</node>
 			<node name="email" value="Trimiteți-ne un e-mail">
-				<node name="url" value="mailto:contact@fbreader.org"/>
+				<node name="url" value="mailto:aplicatii.romanesti@gmail.com"/>
 			</node>
-			<node name="googleplus" value="Participa la comunitatea FBReader pe Google+">
-				<node name="url" value="https://plus.google.com/communities/115894899404862312312"/>
+			<node name="googleplus" value="Participa la comunitatea pe Google+">
+				<node name="url" value="http://plus.google.com/u/0/b/104472561909298753983/#104472561909298753983/posts"/>
 			</node>
 			<node name="twitter" value="Urmați-ne pe Twitter">
-				<node name="url" value="https://twitter.com/fbreader"/>
+				<node name="url" value="https://twitter.com/aplicatii_ro"/>
 			</node>
 			<node name="facebook" value="FBReader pe Facebook">
-				<node name="url" value="https://facebook.com/fbreader"/>
+				<node name="url" value="http://www.facebook.com/people/Aplicatii-Romanesti/100003250206506"/>
 			</node>
 			<node name="telegram" value="Add Telegram channel" toBeTranslated="true">
 				<node name="url" value="https://telegram.me/fbreader" toBeTranslated="true"/>
