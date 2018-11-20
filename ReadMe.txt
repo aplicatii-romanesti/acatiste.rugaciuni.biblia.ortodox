@@ -1,3 +1,6 @@
+NOTE:
+  - proiectul s-a mutat la: https://github.com/aplicatii-romanesti/FBReader-Android-2
+
 Multumiri:
 En: Thanks TO:
 
