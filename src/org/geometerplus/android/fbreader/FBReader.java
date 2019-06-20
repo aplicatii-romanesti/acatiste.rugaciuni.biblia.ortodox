@@ -21,6 +21,20 @@ package org.geometerplus.android.fbreader;
 
 import java.util.*;
 
+//import android.support.v4.content.ContextCompat; //aplicatii.romanesti perms
+//import android.support.v13.app.ActivityCompat;//aplicatii.romanesti perms
+import android.support.v4.app.ActivityCompat;//aplicatii.romanesti perms
+// import androidx.core.app.ActivityCompat;
+import android.Manifest;//aplicatii.romanesti perms
+import android.content.pm.PackageManager;//aplicatii.romanesti perms
+import android.widget.Toast;//aplicatii.romanesti perms
+import android.util.Log; //pt LOG pt perms
+
+import android.app.PendingIntent; // pendingIntent (pt restart pt perms)
+import android.app.AlarmManager; //AlarmManager(pt restart pt perms)
+import android.provider.Settings; //perms: if denied with never ask again, send him to settings...
+import android.app.AlertDialog; //perms: message why...
+
 import android.app.ActionBar;
 import android.app.SearchManager;
 import android.content.*;
@@ -56,6 +70,7 @@ import org.geometerplus.android.fbreader.tips.TipsActivity;
 import org.geometerplus.android.util.UIUtil;
 
 public final class FBReader extends ZLAndroidActivity {
+	private static final String TAG = "PERMISSION_WRITE_EXTERNAL_STORAGE: "; //aplicatii.romanesti
 	static final int ACTION_BAR_COLOR = Color.DKGRAY;
 
 	public static final String BOOK_PATH_KEY = "BookPath";
@@ -145,8 +160,8 @@ public final class FBReader extends ZLAndroidActivity {
 		}
 
 		fbReader.addAction(ActionCode.SHOW_LIBRARY, new ShowLibraryAction(this, fbReader));
-		fbReader.addAction(ActionCode.SHOW_LIBRARY_SDCARD, new ShowLibrarySDCardFolderAction(this, fbReader));//maryhit
-		fbReader.addAction(ActionCode.SHOW_LIBRARY_OPEN_BOOKS, new ShowLibraryOpenBooksFolderAction(this, fbReader));//maryhit Nicu/maryhit adaugat pentru buton nou direct in directoare
+		fbReader.addAction(ActionCode.SHOW_LIBRARY_SDCARD, new ShowLibrarySDCardFolderAction(this, fbReader));//aplicatii.romanesti
+		fbReader.addAction(ActionCode.SHOW_LIBRARY_OPEN_BOOKS, new ShowLibraryOpenBooksFolderAction(this, fbReader));//aplicatii.romanesti Nicu/aplicatii.romanesti adaugat pentru buton nou direct in directoare
 		fbReader.addAction(ActionCode.SHOW_PREFERENCES, new ShowPreferencesAction(this, fbReader));
 		fbReader.addAction(ActionCode.SHOW_BOOK_INFO, new ShowBookInfoAction(this, fbReader));
 		fbReader.addAction(ActionCode.SHOW_TOC, new ShowTOCAction(this, fbReader));
@@ -175,7 +190,212 @@ public final class FBReader extends ZLAndroidActivity {
 			fbReader.addAction(ActionCode.SET_SCREEN_ORIENTATION_REVERSE_PORTRAIT, new SetScreenOrientationAction(this, fbReader, ZLibrary.SCREEN_ORIENTATION_REVERSE_PORTRAIT));
 			fbReader.addAction(ActionCode.SET_SCREEN_ORIENTATION_REVERSE_LANDSCAPE, new SetScreenOrientationAction(this, fbReader, ZLibrary.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
 		}
-		fbReader.copyBooksToSDCard(this); //maryhit:  passing context
+    //start aplicatii.romanesti:
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { //ask for sdcard perms...
+
+		  if ( ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ) {
+          Log.e(TAG, "We do not have the perms for storage, going to request now.");
+    		  ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 7);
+    		  Log.e(TAG, "We requested perms, waiting the callback onRequestPermissionsResult...");
+ 		  }
+		}//done aplicatii.romanesti
+		fbReader.copyBooksToSDCard(this); //aplicatii.romanesti:  passing context
+	}
+
+  // aplicatii.romanesti for perms...
+    /**
+   * start the App Settings Activity so that the user can change
+   * settings related to the application such as permissions.
+   */
+  private void startAppSettingsConfigActivity() {
+      // final Intent i = new Intent();
+      // i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+      // i.addCategory(Intent.CATEGORY_DEFAULT);
+      // i.setData(Uri.parse("package:" + getActivity().getPackageName()));
+      // i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      // i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY); // "The Intent.FLAG_ACTIVITY_NO_HISTORY may sometimes cause a problemous situation on tablets when a pop-up is shown within the settings screen it will close the settings screen. Simply removing that flag will solve this issue."
+      // i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+      // getActivity().startActivity(i);
+
+  	//
+			Uri uri = new Uri.Builder()
+			        .scheme("package")
+			        .opaquePart(getPackageName())
+			        .build();
+			final Intent i = new Intent();
+			i.setData(uri);
+			i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+			//i.addCategory(Intent.CATEGORY_DEFAULT);
+			//i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); // If set then opens Settings Screen(Activity) as new activity. Otherwise, it will be opened in currently running activity.
+			startActivity(i);
+			//startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri));
+  }
+  // aplicatii.romanesti for perms...
+  public static void doRestart(Context c) {
+        try {
+            //check if the context is given
+            if (c != null) {
+                //fetch the packagemanager so we can get the default launch activity 
+                // (you can replace this intent with any other activity if you want
+                PackageManager pm = c.getPackageManager();
+                //check if we got the PackageManager
+                if (pm != null) {
+                    //create the intent with the default start activity for your application
+                    Intent mStartActivity = pm.getLaunchIntentForPackage(
+                            c.getPackageName()
+                    );
+                    if (mStartActivity != null) {
+                        mStartActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        //create a pending intent so the application is restarted after System.exit(0) was called. 
+                        // We use an AlarmManager to call this intent in 100ms
+                        int mPendingIntentId = 223344;
+                        PendingIntent mPendingIntent = PendingIntent
+                                .getActivity(c, mPendingIntentId, mStartActivity,
+                                        PendingIntent.FLAG_CANCEL_CURRENT);
+                        AlarmManager mgr = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
+                        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 300, mPendingIntent);
+                        //kill the application
+                        android.os.Process.killProcess(android.os.Process.myPid());//aplicatii.romanesti
+                        System.exit(0);
+                    } else {
+                        Log.e(TAG, "Was not able to restart application, mStartActivity null");
+                    }
+                } else {
+                    Log.e(TAG, "Was not able to restart application, PM null");
+                }
+            } else {
+                Log.e(TAG, "Was not able to restart application, Context null");
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "Was not able to restart application");
+        }
+  }
+	@Override
+	public void onRequestPermissionsResult(int requestCode,
+	                                       String[] permissions,
+	                                       int[] grantResults) {
+
+			    // if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+	      //     Log.w(TAG, "shouldShowRequestPermissionRationale: true, meaning we asked before and it was deny.Now we ask again.");
+       //      ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 7);
+	      //   } else {
+	      //   	Log.w(TAG, "they denied and set neverAskAgain...Write External Storage permission allows us to do store the books.");
+	      //     this.startAppSettingsConfigActivity();
+	      //     this.doRestart(this);
+	      //     ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE}, 7);
+	      //     Log.w(TAG, "they denied and set neverAskAgain...Write External Storage permission allows us to do store the books.");
+	      //   }
+
+
+	    if (requestCode == 7) {
+	        if(grantResults.length == 1
+	           && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+	        	Log.e(TAG, "onRequestPermissionsResult: PERMISSION_GRANTED, going to restart the app.");
+	            // We can now safely use the API we requested access to WRITE_EXTERNAL_STORAGE
+	        	  //this.recreate(); // we recreate the activity, in order to write to sdcard.
+	        	  // Intent intent = getIntent();
+	      //   	  getActivity().finish();
+							// finish();
+							// startActivity(intent);
+	        	// this.finishAffinity();
+					  // android.os.Process.killProcess(android.os.Process.myPid());
+					  // System.exit(1);          
+					     this.doRestart(this);
+	        } else {
+	        	Log.e(TAG, "onRequestPermissionsResult: Perm was denied, checking if it was with neverAskAgain...");
+
+ 				    if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+	            Log.w(TAG, "shouldShowRequestPermissionRationale: true, meaning it was denied but we can ask again later on.");
+	            
+	            //msg
+              Log.w(TAG, "shouldShowRequestPermissionRationale: true, going to show rationale message");
+              String message = "Cartile incluse sunt extrase si folosite pe SDCard-ul dispozitivului. Fara a avea acces la ele, aplicatia nu poate functiona. (varianta aplicatiei pentru versiunile mai noi de Android, nu mai are nevoie de aceasta permisiune). La fel nici aplicatia, 'biblioteca ortodoxa' nu mai foloseste SDCard-ul.";
+              DialogInterface.OnClickListener listenerRestart = null;
+              listenerRestart = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //this will be executed if User clicks OK button. This is gonna take the user to the App Settings
+                    Context c = FBReader.this;
+                    //startAppSettingsConfigActivity();
+                    FBReader.doRestart(c);
+                }
+              };
+
+              DialogInterface.OnClickListener listenerClose = null;
+              listenerClose = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //this will be executed if User clicks OK button. This is gonna take the user to the App Settings
+                    Context c = FBReader.this;
+                    //startAppSettingsConfigActivity();
+					          android.os.Process.killProcess(android.os.Process.myPid());
+					          System.exit(1);          
+                }
+              };
+	            new AlertDialog.Builder(this) //, R.style.AlertDialogTheme)
+	            .setCancelable(false)
+	            .setMessage(message)
+	            .setPositiveButton("Reporneste", listenerRestart)
+	            .setNegativeButton("Inchide", listenerClose)
+	            .create().show();
+              //end msg
+	            //this.doRestart(this);
+	          }
+	          else {
+	          	Log.w(TAG, "they denied and set neverAskAgain. Sending him to App setting and exit.");
+
+	          		            //msg
+              Log.w(TAG, "shouldShowRequestPermissionRationale: true, going to show rationale message");
+              String message = "Cartile incluse sunt extrase si folosite pe SDCard-ul dispozitivului. Fara a avea acces la ele, aplicatia nu poate functiona. (varianta aplicatiei pentru versiunile mai noi de Android, nu mai are nevoie de aceasta permisiune). La fel nici aplicatia, 'biblioteca ortodoxa' nu mai foloseste SDCard-ul.";
+              DialogInterface.OnClickListener listenerneverAskAgainRestart = null;
+              listenerneverAskAgainRestart = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    startAppSettingsConfigActivity();
+           //          android.os.Process.killProcess(android.os.Process.myPid());
+					  				// System.exit(1);   
+                }
+              };
+              DialogInterface.OnClickListener listenerneverAskAgainClose = null;
+              listenerneverAskAgainClose = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //this will be executed if User clicks OK button. This is gonna take the user to the App Settings
+                    Context c = FBReader.this;
+                    //startAppSettingsConfigActivity();
+					          android.os.Process.killProcess(android.os.Process.myPid());
+					          System.exit(1);          
+                }
+              };
+	            new AlertDialog.Builder(this) //, R.style.AlertDialogTheme)
+	            .setCancelable(false)
+	            .setMessage(message)
+	            .setPositiveButton("Reporneste", listenerneverAskAgainRestart)
+	            .setNegativeButton("Inchide", listenerneverAskAgainClose)
+	            .create().show();
+              //end msg
+
+	          	// this.startAppSettingsConfigActivity();
+						  // android.os.Process.killProcess(android.os.Process.myPid());
+					  	// System.exit(1);        
+	          }
+
+
+	        	// this.startAppSettingsConfigActivity();
+	        	
+	        	  // Toast.makeText(this, "2.Toate cartile vor fi scrise si folosite de pe SDCard-ul telefonului. Pentru aceasta aplicatia are nevoie de permisiunea dvs. Fara aceasta permisiune, aplicatia nu poate functiona.", Toast.LENGTH_LONG).show();
+	        	  //this.recreate();
+	            // Permission was denied or request was cancelled
+	          //this.finishAndRemoveTask(); //api 21+ ; Finishes all activities in this task and removes it from the recent tasks list.
+	          //this.finishAffinity(); //api 16+          
+	          //getActivity().finish(); //finishes only current activity
+					  // moveTaskToBack(true); //move to background
+
+					  // android.os.Process.killProcess(android.os.Process.myPid());
+					  // System.exit(1);            
+					  // this.startAppSettingsConfigActivity();
+	        }
+	    }
 	}
 
 	@Override
@@ -398,8 +618,8 @@ public final class FBReader extends ZLAndroidActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-		addMenuItem(menu, ActionCode.SHOW_LIBRARY_SDCARD, R.drawable.ic_list_library_search);//fbreader);//ic_list_library_folder);//maryhit
-		//NOT WORKING		addMenuItem(menu, ActionCode.SHOW_LIBRARY_OPEN_BOOKS, R.drawable.fbreader);//ic_list_library_folder);//maryhit
+		addMenuItem(menu, ActionCode.SHOW_LIBRARY_SDCARD, R.drawable.ic_list_library_search);//fbreader);//ic_list_library_folder);//aplicatii.romanesti
+		//NOT WORKING		addMenuItem(menu, ActionCode.SHOW_LIBRARY_OPEN_BOOKS, R.drawable.fbreader);//ic_list_library_folder);//aplicatii.romanesti
 		addMenuItem(menu, ActionCode.SWITCH_TO_NIGHT_PROFILE, R.drawable.ic_menu_night);
 		addMenuItem(menu, ActionCode.SWITCH_TO_DAY_PROFILE, R.drawable.ic_menu_day);
 		addMenuItem(menu, ActionCode.INCREASE_FONT);
